@@ -36,7 +36,19 @@ def recognize_face(img):
             cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
             i += 1
 
-    # cv2.imshow('img', img)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
     return img
+
+
+def img2pixels(img):
+    # Set threshold and maxValue
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    thresh = 80
+    maxValue = 255
+
+    # Basic threshold example
+    th, dst = cv2.threshold(gray, thresh, maxValue, cv2.THRESH_BINARY);
+
+    hist = cv2.calcHist([gray], [0], None, [256], [0, 256])
+
+    cv2.imshow('Normal', img)
+    cv2.imshow('Gray', gray)
