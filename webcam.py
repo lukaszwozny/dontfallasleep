@@ -41,6 +41,10 @@ def get_detected_img(img, gray_img):
     return img_copy
 
 
+def is_open(param):
+    pass
+
+
 def show_all_detected_eyes(eyes):
     i = 0
     max_value = 0
@@ -58,6 +62,34 @@ def show_all_detected_eyes(eyes):
         y = eye[1]
         if y == max_value or y == max_value_2:
             cv2.imshow('test' + str(display_iter), eye[0])
+            cv2.imwrite('eyes//eye_' + str(display_iter) + '.jpg', eye[0])
+            is_open(eye[0])
             display_iter += 1
-            # cv2.imwrite('eyes//eye_' + str(i) + '.jpg', eye)
         i += 1
+
+def is_eye_open(eye_img):
+    width, height = eye_img.shape[:2]
+    blank_image = eye_img.copy()
+    for y in range(height):
+        for x in range(width):
+            # Get RGB
+            bgr = eye_img[x][y]
+            r = int(bgr[2])
+            g = int(bgr[1])
+            b = int(bgr[0])
+
+            # Check if white
+            is_white = False
+            max_step = 100
+            max_dif_rg = 15
+            max_dif_b = 40
+            if r > max_step and g > max_step and b > max_step:
+                if abs(r - g) < max_dif_rg and b - r < max_dif_b and b - g < max_dif_b:
+                    blank_image[x][y] = (0, 0, 255)
+                    is_white = True
+
+            if x == 24 and y == 37:
+                blank_image[x][y] = (255, 0, 0)
+                print((r, g, b))
+
+    return blank_image
