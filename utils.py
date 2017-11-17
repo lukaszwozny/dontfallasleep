@@ -8,16 +8,130 @@ class Webcam:
 
     def __init__(self):
         self.winks = 0
-        print("init22")
-
-    def testFunc(self):
-        print('testf22unc {0}'.format(self.winks))
+        self.is_open = True
 
     def start_detection(self, img, gray_img):
         img_copy = img.copy()
-        face = self.detect_face(gray_img=gray_img)
+        faces = self.detect_face(gray_img=gray_img)
 
-        return img
+        all_eyes = []
+        for (x, y, w, h) in faces:
+            cv2.rectangle(img_copy, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            roi_gray = gray_img[y:y + h, x:x + w]
+            roi_color = img_copy[y:y + h, x:x + w]
+
+            eyes = self.detect_eyes(gray_roi_img=roi_gray)
+            for (ex, ey, ew, eh) in eyes:
+                ab_ey = y + ey
+                ab_ex = x + ex
+                eye_img = img[ab_ey:ab_ey + eh, ab_ex:ab_ex + ew]
+                if ey < h / 2:
+                    all_eyes.append(eye_img)
+                    cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+
+        self.show_all_detected_eyes(all_eyes)
+        return img_copy
+
+
+    def show_all_detected_eyes(self, eyes):
+        eyes_all_img = None
+        if len(eyes) == 0:
+            return
+
+        i = 0
+        opens = 0
+        for eye in eyes:
+            is_open, eye = self.is_eye_open(eye)
+            if is_open:
+                opens += 1
+            if i == 0:
+                eyes_all_img = eye
+            else:
+                eyes_all_img = self.vconcat(eye, eyes_all_img)
+            i += 1
+        cv2.imshow('eyes', eyes_all_img)
+
+        open_green = np.zeros((40, 40, 3), np.uint8)
+        for y in range(40):
+            for x in range(40):
+                open_green[x][y] = (255, 255, 255)
+        close_black = np.zeros((40, 40, 3), np.uint8)
+
+        if opens == 2:
+            cv2.imshow('is_open', open_green)
+            if not self.is_open:
+                self.is_open = True
+                self.winks += 1
+                print('winks: {0}'.format(self.winks))
+        elif opens == 0:
+            cv2.imshow('is_open', close_black)
+            if self.is_open:
+                self.is_open = False
+
+    def is_eye_open(self, eye_img):
+        is_open = False
+
+        black_pixels = 0
+        black_pixels_x = 0
+        black_pixels_y = 0
+
+        white_pixels = 0
+        white_pixels_x = 0
+        white_pixels_y = 0
+
+        height, width = eye_img.shape[:2]
+        blank_image = eye_img.copy()
+
+        for y in range(height):
+            for x in range(width):
+                # Get RGB
+                bgr = eye_img[y][x]
+                r = int(bgr[2])
+                g = int(bgr[1])
+                b = int(bgr[0])
+
+                # Check if white
+                min_white = (177, 142, 152)
+                if r > min_white[0] and g > min_white[1] and b > min_white[2]:
+                    if abs(height / 2 - y) < height / 2 * 0.5 \
+                            and abs(width / 2 - x) < width / 2 * 0.75:
+                        blank_image[y][x] = (0, 0, 255)
+                        white_pixels += 1
+                        white_pixels_x += x
+                        white_pixels_y += y
+
+                # Check if black
+                max_black = (122, 82, 92)
+                if r < max_black[0] and g < max_black[1] and b < max_black[2]:
+                    if abs(height / 2 - y) < height / 2 * 0.3 \
+                            and abs(width / 2 - x) < width / 2 * 0.30:
+                        blank_image[x][y] = (0, 255, 0)
+                        black_pixels += 1
+                        black_pixels_x += x
+                        black_pixels_y += y
+
+        middle_x = width / 2
+        middle_y = height / 2
+        n_pixels = width * height
+        if white_pixels > 0:
+            # check is white in the middle
+            white_pixels_x = white_pixels_x / white_pixels
+            white_pixels_y = white_pixels_y / white_pixels
+            white_x_diff = abs(white_pixels_x - middle_x) / middle_x * 100
+            white_y_diff = abs(white_pixels_y - middle_y) / middle_y * 100
+            white_fill = white_pixels / n_pixels * 100
+
+        if black_pixels > 0:
+            # check is black in the middle
+            black_pixels_x = black_pixels_x / black_pixels
+            black_pixels_y = black_pixels_y / black_pixels
+            black_x_diff = abs(black_pixels_x - middle_x) / middle_x * 100
+            black_y_diff = abs(black_pixels_y - middle_y) / middle_y * 100
+            black_fill = black_pixels / n_pixels * 100
+            if black_fill > 2:
+                is_open = True
+
+        return is_open, blank_image
 
     @staticmethod
     def detect_face(gray_img):

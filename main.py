@@ -1,14 +1,11 @@
 import cv2
 import numpy as np
-from webcam import Webcam
-from utils import Webcam as WW
+from utils import Webcam
 
-web = WW()
+webcam = Webcam()
 
 
 def from_webcam():
-    w = Webcam()
-
     # cap = cv2.VideoCapture(0)
     cap = cv2.VideoCapture(0)
 
@@ -21,11 +18,11 @@ def from_webcam():
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # get all images
-        img_detected = w.get_detected_img(img=img, gray_img=gray)
+        img_detected = webcam.start_detection(img=img, gray_img=gray)
         # cv2.imshow('lap', sobelx)
 
         # connect all images
-        org_det_img = w.hconcat(img, img_detected)
+        org_det_img = Webcam.hconcat(img, img_detected)
         # all_img = cv2.vconcat((org_det_img, org_det_img2))
 
         # Show all images
@@ -43,7 +40,6 @@ def from_webcam():
 
 
 def from_video_file(filename):
-    webcam = WW()
 
     # cap = cv2.VideoCapture(0)
     cap = cv2.VideoCapture(filename)
@@ -80,7 +76,6 @@ def from_video_file(filename):
 
 
 def from_images():
-    w = Webcam
     # Load test images
     open_img = cv2.imread('i//open.jpg')
     close_img = cv2.imread('i//close.jpg')
@@ -104,20 +99,20 @@ def from_images():
     minB = 127
     while 1:
         min_color = (minR, minG, minB)
-        open_check = w.is_eye_open(open_img)
-        close_check = w.is_eye_open(close_img)
-        # openL_check = webcam.is_eye_open_adj(openL_img, min_color)
-        is_openR_check, openR_check = webcam.is_eye_open(openR_img, min_color)
+        is_open_open, open_check = webcam.is_eye_open(open_img)
+        is_open_close, close_check = webcam.is_eye_open(close_img)
+        # is_openL_open, openL_check = webcam.is_eye_open_adj(openL_img, min_color)
+        is_openR_open, openR_check = webcam.is_eye_open(openR_img)
 
         # Concat 1
-        opens = w.hconcat(open_img, open_check)
-        closed = w.hconcat(close_img, close_check)
-        set1 = w.vconcat(opens, closed)
+        opens = Webcam.hconcat(open_img, open_check)
+        closed = Webcam.hconcat(close_img, close_check)
+        set1 = Webcam.vconcat(opens, closed)
 
         # Concat 2
-        # opensL = webcam.hconcat(openL_img, openL_check)
-        opensR = w.hconcat(openR_img, openR_check)
-        # set2 = webcam.vconcat(opensL, opensR)
+        # opensL = Webcam.hconcat(openL_img, openL_check)
+        opensR = Webcam.hconcat(openR_img, openR_check)
+        # set2 = Webcam.vconcat(opensL, opensR)
 
         cv2.imshow('set1', set1)
         cv2.imshow('set2', opensR)
@@ -162,8 +157,6 @@ def from_images():
 
 
 if __name__ == '__main__':
-    web.testFunc()
-
     from_video_file('woman.mp4')
     # from_webcam()
     # from_images()
