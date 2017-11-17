@@ -51,20 +51,11 @@ class Webcam:
             i += 1
         cv2.imshow('eyes', eyes_all_img)
 
-        open_green = np.zeros((40, 40, 3), np.uint8)
-        for y in range(40):
-            for x in range(40):
-                open_green[x][y] = (255, 255, 255)
-        close_black = np.zeros((40, 40, 3), np.uint8)
-
         if opens == 2:
-            cv2.imshow('is_open', open_green)
             if not self.is_open:
                 self.is_open = True
                 self.winks += 1
-                print('winks: {0}'.format(self.winks))
         elif opens == 0:
-            cv2.imshow('is_open', close_black)
             if self.is_open:
                 self.is_open = False
 

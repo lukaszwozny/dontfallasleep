@@ -1,8 +1,55 @@
 import cv2
 import numpy as np
+import time
+
 from utils import Webcam
 
 webcam = Webcam()
+
+
+def display_text(img, text, position, margin=0):
+    height, width = img.shape[:2]
+    pos_x = position[0]
+    pos_y = position[1]
+
+    font_face = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    thickness = 2
+    color = (255, 0, 255)
+    text_size = cv2.getTextSize(
+        text=text,
+        fontFace=font_face,
+        fontScale=font_scale,
+        thickness=thickness
+    )
+    if position[0] == -1:  # align left
+        pos_x = margin
+    elif position[0] == -2:  # align right
+        pos_x = width - text_size[0][0] - margin
+    if position[1] == -1:  # align top
+        pos_y = text_size[0][1] + margin
+    elif position[1] == -2:  # align bottom
+        pos_y = height - margin
+
+    position = (pos_x, pos_y)
+
+    cv2.putText(img=img, text=text, org=position,
+                fontFace=font_face, fontScale=font_scale,
+                color=color, thickness=thickness)
+
+
+def show_fps(img, fps):
+    text = 'FPS: {0:.0f}'.format(fps)
+    margin = 5
+    position = (-1, -2)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+
+def show_winks(img, winks):
+    text = 'Winks: {0}'.format(winks)
+    margin = 5
+    position = (-1, -1)
+    display_text(img=img, text=text, position=position, margin=margin)
 
 
 def from_webcam():
@@ -40,12 +87,20 @@ def from_webcam():
 
 
 def from_video_file(filename):
-
     # cap = cv2.VideoCapture(0)
-    cap = cv2.VideoCapture(filename)
+    video = cv2.VideoCapture(filename)
 
-    while cap.isOpened():
-        ret, img = cap.read()
+    fps = video.get(cv2.CAP_PROP_FPS)
+    print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
+
+    # Start time
+    start_time = time.time()
+    x = 0.1  # displays the frame rate every 0.1 second
+    counter = 0
+    fps = 0
+
+    while video.isOpened():
+        ret, img = video.read()
         if not ret:
             break
         # img = cv2.flip(img, 1)  # flip vertically
@@ -55,6 +110,15 @@ def from_video_file(filename):
         # get all images
         img_detected = webcam.start_detection(img=img, gray_img=gray)
         # cv2.imshow('lap', sobelx)
+
+        counter += 1
+        if (time.time() - start_time) > x:
+            fps = counter / (time.time() - start_time)
+            # print("FPS: ", counter / (time.time() - start_time))
+            counter = 0
+            start_time = time.time()
+        show_fps(img, fps)
+        show_winks(img, webcam.winks)
 
         # connect all images
         org_det_img = webcam.hconcat(img, img_detected)
@@ -71,7 +135,7 @@ def from_video_file(filename):
             cv2.imwrite('face.jpg', org_det_img)
 
     cv2.waitKey(0)
-    cap.release()
+    video.release()
     cv2.destroyAllWindows()
 
 
