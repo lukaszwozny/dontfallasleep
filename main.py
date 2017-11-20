@@ -60,6 +60,7 @@ def show_times(img, open_frames, close_frames, video_fps):
     display_text(img=img, text=text, position=position, margin=margin)
 
     close_time = close_frames/video_fps
+    # text = 'frame: {0:}'.format(close_frames)
     text = 'close: {0:.2f}s'.format(close_time)
     position = (-2, -2)
     display_text(img=img, text=text, position=position, margin=margin)
@@ -133,6 +134,7 @@ def from_video_file(filename):
         show_fps(img, fps)
         show_winks(img, webcam.winks)
 
+        # show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
         show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
 
         # connect all images
@@ -150,6 +152,8 @@ def from_video_file(filename):
             k = 0
             while k != 32:
                 k = cv2.waitKey(30) & 0xff
+                if k == 27:
+                    return
         elif k == ord('s'):
             cv2.imwrite('face.jpg', org_det_img)
 
@@ -240,7 +244,7 @@ def from_images():
 
 
 if __name__ == '__main__':
-    from_video_file('woman.mp4')
-    # from_video_file('woman_2.mp4')
+    from_video_file('vids/woman.mp4')
+    # from_video_file('vids/woman_2.mp4')
     # from_webcam()
     # from_images()

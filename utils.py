@@ -13,8 +13,12 @@ class Webcam:
         self.is_open = True
         self.open_frames = 0
         self.close_frames = 0
+        self.min_black = 3840 * 2160
+        self.max_black = 0
+        self.frame_number = 0
 
     def start_detection(self, img, gray_img):
+        self.frame_number += 1
         img_copy = img.copy()
         faces = self.detect_face(gray_img=gray_img)
 
@@ -35,7 +39,6 @@ class Webcam:
 
         self.show_all_detected_eyes(all_eyes)
         return img_copy
-
 
     def show_all_detected_eyes(self, eyes):
         eyes_all_img = None
@@ -133,7 +136,6 @@ class Webcam:
 
         return is_open, blank_image
 
-
     def is_eye_open2(self, eye_img):
         is_open = False
         hsv_img = cv2.cvtColor(eye_img, cv2.COLOR_BGR2HSV)
@@ -146,73 +148,49 @@ class Webcam:
         white_pixels_x = 0
         white_pixels_y = 0
 
+        blue_pixels = 0
+        lower_blue = np.array([110, 50, 50])
+        upper_blue = np.array([170, 255, 255])
+
+        blank_image2 = cv2.inRange(hsv_img, lower_blue, upper_blue)
+        black_pixels = cv2.countNonZero(blank_image2)
+
         height, width = eye_img.shape[:2]
         blank_image = eye_img.copy()
-        blank_image2 = eye_img.copy()
 
-        for y in range(height):
-            for x in range(width):
-                # Get RGB
-                hsv = hsv_img[y][x]
+        start_y = int(height / 4)
+        end_y = int(height * 3 / 4)
+        start_x = int(width / 4)
+        end_x = int(width * 3 / 4)
+        for y in range(start_y, end_y):
+            for x in range(start_x, end_x):
+                if blank_image2[x][y] == 255:
+                    blank_image[x][y] = (0, 0, 255)
 
-                h = int(hsv[0])
-                s = int(hsv[1])
-                v = int(hsv[2])
-                # bgr = eye_img[y][x]
-                # r = int(bgr[2])
-                # g = int(bgr[1])
-                # b = int(bgr[0])
-                # define range of blue color in HSV
-                # lower_blue = np.array([110, 50, 50])
-                # upper_blue = np.array([130, 255, 255])
-                lower_blue = np.array([110, 50, 50])
-                upper_blue = np.array([170, 255, 255])
-                blank_image2 = cv2.inRange(hsv_img, lower_blue, upper_blue)
+        if black_pixels < self.min_black:
+            self.min_black = black_pixels
+        elif black_pixels > self.max_black:
+            self.max_black = black_pixels
 
-                if 110 < h < 130 and 50 < s < 255 and 50 < v < 255:
-                    blank_image[y][x] = (0, 0, 255)
+        print('frame: {0}'.format(self.frame_number))
+        print('min: {0}'.format(self.min_black))
+        print('max: {0}'.format(self.max_black))
+        print('now: {0}'.format(black_pixels))
 
-                    # Check if white
-                    # min_white = (177, 142, 152)
-                    # if r > min_white[0] and g > min_white[1] and b > min_white[2]:
-                    #     if abs(height / 2 - y) < height / 2 * 0.5 \
-                    #             and abs(width / 2 - x) < width / 2 * 0.75:
-                    #         blank_image[y][x] = (0, 0, 255)
-                    #         white_pixels += 1
-                    #         white_pixels_x += x
-                    #         white_pixels_y += y
-                    #
-                    # # Check if black
-                    # max_black = (122, 82, 92)
-                    # if r < max_black[0] and g < max_black[1] and b < max_black[2]:
-                    #     if abs(height / 2 - y) < height / 2 * 0.3 \
-                    #             and abs(width / 2 - x) < width / 2 * 0.30:
-                    #         blank_image[x][y] = (0, 255, 0)
-                    #         black_pixels += 1
-                    #         black_pixels_x += x
-                    #         black_pixels_y += y
-
-        middle_x = width / 2
-        middle_y = height / 2
-        n_pixels = width * height
-        if white_pixels > 0:
-            # check is white in the middle
-            white_pixels_x = white_pixels_x / white_pixels
-            white_pixels_y = white_pixels_y / white_pixels
-            white_x_diff = abs(white_pixels_x - middle_x) / middle_x * 100
-            white_y_diff = abs(white_pixels_y - middle_y) / middle_y * 100
-            white_fill = white_pixels / n_pixels * 100
-
-        if black_pixels > 0:
-            # check is black in the middle
-            black_pixels_x = black_pixels_x / black_pixels
-            black_pixels_y = black_pixels_y / black_pixels
-            black_x_diff = abs(black_pixels_x - middle_x) / middle_x * 100
-            black_y_diff = abs(black_pixels_y - middle_y) / middle_y * 100
-            black_fill = black_pixels / n_pixels * 100
-            if black_fill > 2:
+        if self.frame_number > 20:
+            amplitude = self.max_black - self.min_black
+            normalize = black_pixels - self.min_black
+            m = 0.8
+            print(amplitude*m)
+            print(normalize)
+            print()
+            if normalize < amplitude * m:
+                is_open = False
+            else:
                 is_open = True
-        return is_open, blank_image2
+                print('close')
+
+        return is_open, blank_image
 
     @staticmethod
     def detect_face(gray_img):
