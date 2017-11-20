@@ -52,6 +52,19 @@ def show_winks(img, winks):
     display_text(img=img, text=text, position=position, margin=margin)
 
 
+def show_times(img, open_frames, close_frames, video_fps):
+    open_time = open_frames/video_fps
+    text = 'open: {0:.2f}s'.format(open_time)
+    margin = 5
+    position = (-2, -1)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+    close_time = close_frames/video_fps
+    text = 'close: {0:.2f}s'.format(close_time)
+    position = (-2, -2)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+
 def from_webcam():
     # cap = cv2.VideoCapture(0)
     cap = cv2.VideoCapture(0)
@@ -90,8 +103,8 @@ def from_video_file(filename):
     # cap = cv2.VideoCapture(0)
     video = cv2.VideoCapture(filename)
 
-    fps = video.get(cv2.CAP_PROP_FPS)
-    print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
+    video_fps = video.get(cv2.CAP_PROP_FPS)
+    print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(video_fps))
 
     # Start time
     start_time = time.time()
@@ -120,6 +133,8 @@ def from_video_file(filename):
         show_fps(img, fps)
         show_winks(img, webcam.winks)
 
+        show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
+
         # connect all images
         org_det_img = webcam.hconcat(img, img_detected)
         # all_img = cv2.vconcat((org_det_img, org_det_img2))
@@ -132,6 +147,10 @@ def from_video_file(filename):
         if k == 27:
             return
         elif k == 32:
+            k = 0
+            while k != 32:
+                k = cv2.waitKey(30) & 0xff
+        elif k == ord('s'):
             cv2.imwrite('face.jpg', org_det_img)
 
     cv2.waitKey(0)
@@ -222,5 +241,6 @@ def from_images():
 
 if __name__ == '__main__':
     from_video_file('woman.mp4')
+    # from_video_file('woman_2.mp4')
     # from_webcam()
     # from_images()

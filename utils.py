@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import time
+
 
 class Webcam:
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -9,6 +11,8 @@ class Webcam:
     def __init__(self):
         self.winks = 0
         self.is_open = True
+        self.open_frames = 0
+        self.close_frames = 0
 
     def start_detection(self, img, gray_img):
         img_copy = img.copy()
@@ -42,6 +46,7 @@ class Webcam:
         opens = 0
         for eye in eyes:
             is_open, eye = self.is_eye_open(eye)
+            # is_open, eye = self.is_eye_open2(eye)
             if is_open:
                 opens += 1
             if i == 0:
@@ -53,11 +58,15 @@ class Webcam:
 
         if opens == 2:
             if not self.is_open:
+                self.open_frames = 0
                 self.is_open = True
                 self.winks += 1
+            self.open_frames += 1
         elif opens == 0:
             if self.is_open:
+                self.close_frames = 0
                 self.is_open = False
+            self.close_frames += 1
 
     def is_eye_open(self, eye_img):
         is_open = False
@@ -203,7 +212,7 @@ class Webcam:
             black_fill = black_pixels / n_pixels * 100
             if black_fill > 2:
                 is_open = True
-        return is_open, hsv_img, blank_image2
+        return is_open, blank_image2
 
     @staticmethod
     def detect_face(gray_img):
