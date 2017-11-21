@@ -4,7 +4,7 @@ import dlib
 import time
 from scipy.spatial import distance as dist
 
-from cv_utils import display_text, show_fps
+from cv_utils import display_text, show_fps, show_times
 
 
 def eye_aspect_ratio(eye):
@@ -39,6 +39,17 @@ def show_winks(img, left, right, total):
     display_text(img=img, text=text, position=position, margin=MARGIN)
 
 
+def show_open_times(img, open_time, open_avg):
+    text = 'open: {0:.2f}s'.format(open_time)
+    margin = 5
+    position = (-2, -1)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+    text = 'avg: {0:.2f}s'.format(open_avg)
+    position = (-2, 60)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+
 def start_dlib(filename=None):
     PREDICTOR_PATH = "shape_predictor_68_face_landmarks.dat"
 
@@ -68,6 +79,16 @@ def start_dlib(filename=None):
     eye_delay = 0
     left_delay = False
     right_delay = False
+    open_time = time.time()
+    open_times = []
+    open_times_iter = 0
+    SIZE = 3
+
+    # For file variables
+    open_frames = 0
+    close_frames = 0
+    frame_number = 0
+    is_open = True
 
     # Start time
     start_time = time.time()
@@ -89,10 +110,12 @@ def start_dlib(filename=None):
     predictor = dlib.shape_predictor(PREDICTOR_PATH)
     while True:
         # Block fps if file
-        if not is_real_time and (time.time() - frame_time) < 1/video_fps:
-            continue
-        else:
-            frame_time = time.time()
+        if not is_real_time:
+            if (time.time() - frame_time) < 1 / video_fps:
+                continue
+            else:
+                frame_time = time.time()
+                frame_number += 1
 
         ret, frame = video_capture.read()
         # Flip vertical
@@ -150,12 +173,33 @@ def start_dlib(filename=None):
                         print("Right eye winked")
                     COUNTER_RIGHT = 0
 
+            was_open = is_open
             if left_wink and right_wink \
                     or left_wink and right_delay \
                     or right_wink and left_delay:
                 TOTAL += 1
                 left_delay = False
                 right_delay = False
+                is_open = False
+            else:
+                is_open = True
+
+            if is_open:
+                if was_open:
+                    open_frames += 1
+                else:
+                    open_frames = 1
+                    if len(open_times) < SIZE:
+                        open_times.append(open_time)
+                        print(open_times)
+                    else:
+                        open_times[open_times_iter] = open_time
+                        open_times_iter += 1
+                        open_times_iter %= SIZE
+                        print(open_times)
+                    open_time = time.time()
+            else:
+                open_time = time.time()
 
             show_winks(frame, TOTAL_LEFT, TOTAL_RIGHT, TOTAL)
 
@@ -172,6 +216,18 @@ def start_dlib(filename=None):
                 counter = 0
                 start_time = time.time()
             show_fps(frame, fps)
+
+            if not is_real_time:
+                open_time = open_frames/video_fps
+            else:
+                open_time = time.time() - open_time
+
+            if len(open_times) != 0:
+                open_avg = sum(open_times) / len(open_times)
+            else:
+                open_avg = 0
+
+            show_open_times(frame, open_time, open_avg)
 
             cv2.imshow("Faces found", frame)
 

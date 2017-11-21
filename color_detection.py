@@ -48,7 +48,7 @@ class Webcam:
         i = 0
         opens = 0
         for eye in eyes:
-            is_open, eye = self.is_eye_open(eye)
+            is_open, eye = self.is_eye_open_hsv(eye)
             # is_open, eye = self.is_eye_open2(eye)
             if is_open:
                 opens += 1

@@ -37,3 +37,15 @@ def show_fps(img, fps):
     margin = 5
     position = (-1, -2)
     display_text(img=img, text=text, position=position, margin=margin)
+
+
+def show_times(img, open_time, close_time):
+    text = 'open: {0:.2f}s'.format(open_time)
+    margin = 5
+    position = (-2, -1)
+    display_text(img=img, text=text, position=position, margin=margin)
+
+    # text = 'frame: {0:}'.format(close_frames)
+    text = 'close: {0:.2f}s'.format(close_time)
+    position = (-2, -2)
+    display_text(img=img, text=text, position=position, margin=margin)

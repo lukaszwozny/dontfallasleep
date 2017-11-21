@@ -4,28 +4,15 @@ import time
 
 from my_dlib import start_dlib
 from color_detection import Webcam
-from cv_utils import display_text, show_fps
+from cv_utils import display_text, show_fps, show_times
 
 webcam = Webcam()
+
 
 def show_winks(img, winks):
     text = 'Winks: {0}'.format(winks)
     margin = 5
     position = (-1, -1)
-    display_text(img=img, text=text, position=position, margin=margin)
-
-
-def show_times(img, open_frames, close_frames, video_fps):
-    open_time = open_frames/video_fps
-    text = 'open: {0:.2f}s'.format(open_time)
-    margin = 5
-    position = (-2, -1)
-    display_text(img=img, text=text, position=position, margin=margin)
-
-    close_time = close_frames/video_fps
-    # text = 'frame: {0:}'.format(close_frames)
-    text = 'close: {0:.2f}s'.format(close_time)
-    position = (-2, -2)
     display_text(img=img, text=text, position=position, margin=margin)
 
 
@@ -97,9 +84,10 @@ def from_video_file(filename):
         show_winks(img, webcam.winks)
 
         # show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
-        show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
+        show_times(img, webcam.open_frames / video_fps, webcam.close_frames / video_fps)
 
         # connect all images
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         org_det_img = webcam.hconcat(img, img_detected)
         # all_img = cv2.vconcat((org_det_img, org_det_img2))
 
