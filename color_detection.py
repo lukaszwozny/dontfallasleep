@@ -136,7 +136,7 @@ class Webcam:
 
         return is_open, blank_image
 
-    def is_eye_open2(self, eye_img):
+    def is_eye_open_hsv(self, eye_img):
         is_open = False
         hsv_img = cv2.cvtColor(eye_img, cv2.COLOR_BGR2HSV)
 
