@@ -1,9 +1,10 @@
 import numpy as np
 import cv2
 import dlib
+import time
 from scipy.spatial import distance as dist
 
-from cv_utils import display_text
+from cv_utils import display_text, show_fps
 
 
 def eye_aspect_ratio(eye):
@@ -68,14 +69,31 @@ def start_dlib(filename=None):
     left_delay = False
     right_delay = False
 
+    # Start time
+    start_time = time.time()
+    MAX_DELAY = 0.1  # displays the frame rate every 0.1 second
+    counter = 0
+    fps = 0
+    frame_time = time.time()
+
     if filename is not None:
         video_capture = cv2.VideoCapture(filename)
+        video_fps = video_capture.get(cv2.CAP_PROP_FPS)
+        print('Video fps: {0}:'.format(video_fps))
+        is_real_time = False
     else:
         video_capture = cv2.VideoCapture(0)
+        is_real_time = True
 
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(PREDICTOR_PATH)
     while True:
+        # Block fps if file
+        if not is_real_time and (time.time() - frame_time) < 1/video_fps:
+            continue
+        else:
+            frame_time = time.time()
+
         ret, frame = video_capture.read()
         # Flip vertical
         frame = cv2.flip(frame, 1)
@@ -105,10 +123,10 @@ def start_dlib(filename=None):
                 ear_left = eye_aspect_ratio(left_eye)
                 ear_right = eye_aspect_ratio(right_eye)
 
-                cv2.putText(frame, "E.A.R. Left : {:.2f}".format(ear_left), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                            (0, 255, 255), 2)
-                cv2.putText(frame, "E.A.R. Right: {:.2f}".format(ear_right), (300, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
-                            (0, 255, 255), 2)
+                # cv2.putText(frame, "E.A.R. Left : {:.2f}".format(ear_left), (300, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                #             (0, 255, 255), 2)
+                # cv2.putText(frame, "E.A.R. Right: {:.2f}".format(ear_right), (300, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
+                #             (0, 255, 255), 2)
 
                 if ear_left < EYE_AR_THRESH:
                     COUNTER_LEFT += 1
@@ -132,8 +150,8 @@ def start_dlib(filename=None):
                         print("Right eye winked")
                     COUNTER_RIGHT = 0
 
-            if left_wink and right_wink\
-                    or left_wink and right_delay\
+            if left_wink and right_wink \
+                    or left_wink and right_delay \
                     or right_wink and left_delay:
                 TOTAL += 1
                 left_delay = False
@@ -147,12 +165,19 @@ def start_dlib(filename=None):
                 left_delay = False
                 right_delay = False
 
+            # count fps
+            counter += 1
+            if (time.time() - start_time) > MAX_DELAY:
+                fps = counter / (time.time() - start_time)
+                counter = 0
+                start_time = time.time()
+            show_fps(frame, fps)
 
             cv2.imshow("Faces found", frame)
 
         k = 0xFF & cv2.waitKey(1)
 
-        if k == ord('q'):
+        if k == ord('q') or k == 27:
             break
 
     cv2.destroyAllWindows()

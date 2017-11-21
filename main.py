@@ -4,17 +4,9 @@ import time
 
 from my_dlib import start_dlib
 from color_detection import Webcam
-from cv_utils import display_text
+from cv_utils import display_text, show_fps
 
 webcam = Webcam()
-
-
-def show_fps(img, fps):
-    text = 'FPS: {0:.0f}'.format(fps)
-    margin = 5
-    position = (-1, -2)
-    display_text(img=img, text=text, position=position, margin=margin)
-
 
 def show_winks(img, winks):
     text = 'Winks: {0}'.format(winks)
@@ -99,7 +91,6 @@ def from_video_file(filename):
         counter += 1
         if (time.time() - start_time) > x:
             fps = counter / (time.time() - start_time)
-            # print("FPS: ", counter / (time.time() - start_time))
             counter = 0
             start_time = time.time()
         show_fps(img, fps)

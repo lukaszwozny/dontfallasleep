@@ -30,3 +30,10 @@ def display_text(img, text, position, margin=0):
     cv2.putText(img=img, text=text, org=position,
                 fontFace=font_face, fontScale=font_scale,
                 color=color, thickness=thickness)
+
+
+def show_fps(img, fps):
+    text = 'FPS: {0:.0f}'.format(fps)
+    margin = 5
+    position = (-1, -2)
+    display_text(img=img, text=text, position=position, margin=margin)
