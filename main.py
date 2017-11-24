@@ -9,8 +9,8 @@ from cv_utils import display_text, show_fps, show_times
 webcam = Webcam()
 
 
-def show_winks(img, winks):
-    text = 'Winks: {0}'.format(winks)
+def show_blinks(img, winks):
+    text = 'Blinks: {0}'.format(winks)
     margin = 5
     position = (-1, -1)
     display_text(img=img, text=text, position=position, margin=margin)
@@ -81,13 +81,12 @@ def from_video_file(filename):
             counter = 0
             start_time = time.time()
         show_fps(img, fps)
-        show_winks(img, webcam.winks)
+        show_blinks(img, webcam.blinks)
 
         # show_times(img, webcam.open_frames, webcam.close_frames, video_fps)
-        show_times(img, webcam.open_frames / video_fps, webcam.close_frames / video_fps)
+        show_times(img, webcam.open_frames / video_fps, webcam.get_average_open_time(video_fps))
 
         # connect all images
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         org_det_img = webcam.hconcat(img, img_detected)
         # all_img = cv2.vconcat((org_det_img, org_det_img2))
 
@@ -194,9 +193,10 @@ def from_images():
 
 
 if __name__ == '__main__':
-    # from_video_file('vids/woman.mp4')
+    from_video_file('vids/woman.mp4')
     # from_video_file('vids/woman_2.mp4')
     # start_dlib()
-    start_dlib(filename='vids/woman.mp4')
+    # start_dlib(filename='vids/woman.mp4')
+    # start_dlib(filename='vids/woman_2.mp4')
     # from_webcam()
     # from_images()

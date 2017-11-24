@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 
 def display_text(img, text, position, margin=0):
@@ -39,13 +40,48 @@ def show_fps(img, fps):
     display_text(img=img, text=text, position=position, margin=margin)
 
 
-def show_times(img, open_time, close_time):
+def show_times(img, open_time, avg_time):
     text = 'open: {0:.2f}s'.format(open_time)
     margin = 5
     position = (-2, -1)
     display_text(img=img, text=text, position=position, margin=margin)
 
-    # text = 'frame: {0:}'.format(close_frames)
-    text = 'close: {0:.2f}s'.format(close_time)
-    position = (-2, -2)
+    text = 'avg: {0:.2f}s'.format(avg_time)
+    position = (-2, 60)
     display_text(img=img, text=text, position=position, margin=margin)
+
+
+def hconcat(img1, img2):
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
+
+    if len(img1.shape) == 2:
+        vis = np.zeros((max(h1, h2), w1 + w2), np.uint8)
+
+        vis[:h1, :w1] = img1
+        vis[:h2, w1:w1 + w2] = img2
+    else:
+        vis = np.zeros((max(h1, h2), w1 + w2, 3), np.uint8)
+
+        vis[:h1, :w1, :3] = img1
+        vis[:h2, w1:w1 + w2, :3] = img2
+
+    return vis
+
+
+def vconcat(img1, img2):
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
+
+    if len(img1.shape) == 2:
+        vis = np.zeros((h1 + h2, max(w1, w2)), np.uint8)
+
+        vis[:h1, :w1] = img1
+        vis[h1:h1 + h2, :w2] = img2
+    else:
+        vis = np.zeros((h1 + h2, max(w1, w2), 3), np.uint8)
+
+        vis[:h1, :w1, :3] = img1
+        vis[h1:h1 + h2, :w2, :3] = img2
+
+    return vis

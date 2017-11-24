@@ -9,13 +9,31 @@ class Webcam:
     eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 
     def __init__(self):
-        self.winks = 0
+        self.blinks = 0
         self.is_open = True
         self.open_frames = 0
         self.close_frames = 0
         self.min_black = 3840 * 2160
         self.max_black = 0
         self.frame_number = 0
+        # Variables for average count
+        self.open_frames_tab = []
+        self.open_frames_iter = 0
+        self.SIZE = 3
+
+    def get_average_open_frames(self):
+        tab_size = len(self.open_frames_tab)
+        if tab_size == 0:
+            return 0
+        else:
+            return sum(self.open_frames_tab) / tab_size
+
+    def get_average_open_time(self, fps):
+        avg_frames = self.get_average_open_frames()
+        if avg_frames == 0:
+            return 0
+        else:
+            return avg_frames/fps
 
     def start_detection(self, img, gray_img):
         self.frame_number += 1
@@ -48,8 +66,8 @@ class Webcam:
         i = 0
         opens = 0
         for eye in eyes:
-            is_open, eye = self.is_eye_open_hsv(eye)
-            # is_open, eye = self.is_eye_open2(eye)
+            # is_open, eye = self.is_eye_open_hsv(eye)
+            is_open, eye = self.is_eye_open(eye)
             if is_open:
                 opens += 1
             if i == 0:
@@ -61,9 +79,18 @@ class Webcam:
 
         if opens == 2:
             if not self.is_open:
-                self.open_frames = 0
+                if len(self.open_frames_tab) < self.SIZE:
+                    self.open_frames_tab.append(self.open_frames)
+                    print(self.open_frames_tab)
+                else:
+                    self.open_frames_tab[self.open_frames_iter] = self.open_frames
+                    self.open_frames_iter += 1
+                    self.open_frames_iter %= self.SIZE
+                    print(self.open_frames_tab)
+                self.open_frames = 1
+
                 self.is_open = True
-                self.winks += 1
+                self.blinks += 1
             self.open_frames += 1
         elif opens == 0:
             if self.is_open:
@@ -172,23 +199,14 @@ class Webcam:
         elif black_pixels > self.max_black:
             self.max_black = black_pixels
 
-        print('frame: {0}'.format(self.frame_number))
-        print('min: {0}'.format(self.min_black))
-        print('max: {0}'.format(self.max_black))
-        print('now: {0}'.format(black_pixels))
-
         if self.frame_number > 20:
             amplitude = self.max_black - self.min_black
             normalize = black_pixels - self.min_black
             m = 0.8
-            print(amplitude*m)
-            print(normalize)
-            print()
             if normalize < amplitude * m:
                 is_open = False
             else:
                 is_open = True
-                print('close')
 
         return is_open, blank_image
 

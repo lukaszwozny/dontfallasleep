@@ -4,7 +4,7 @@ import dlib
 import time
 from scipy.spatial import distance as dist
 
-from cv_utils import display_text, show_fps, show_times
+from cv_utils import display_text, show_fps, show_times, hconcat
 
 
 def eye_aspect_ratio(eye):
@@ -24,18 +24,10 @@ def eye_aspect_ratio(eye):
     return ear
 
 
-def show_winks(img, left, right, total):
-    text = 'Left: {0}'.format(left)
+def show_blinks(img,total):
+    text = 'Blinks: {0}'.format(total)
     MARGIN = 5
     position = (-1, -1)
-    display_text(img=img, text=text, position=position, margin=MARGIN)
-
-    text = 'Right: {0}'.format(right)
-    position = (-1, 60)
-    display_text(img=img, text=text, position=position, margin=MARGIN)
-
-    text = 'Total: {0}'.format(total)
-    position = (-1, 100)
     display_text(img=img, text=text, position=position, margin=MARGIN)
 
 
@@ -75,7 +67,7 @@ def start_dlib(filename=None):
     TOTAL_RIGHT = 0
 
     TOTAL = 0
-    EYE_DELAY_FRAMES = 10
+    EYE_DELAY_FRAMES = 15
     eye_delay = 0
     left_delay = False
     right_delay = False
@@ -119,10 +111,11 @@ def start_dlib(filename=None):
 
         ret, frame = video_capture.read()
         # Flip vertical
-        frame = cv2.flip(frame, 1)
+        # frame = cv2.flip(frame, 1)
 
         if ret:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            org_frame = frame.copy()
 
             rects = detector(gray, 0)
 
@@ -201,7 +194,7 @@ def start_dlib(filename=None):
             else:
                 open_time = time.time()
 
-            show_winks(frame, TOTAL_LEFT, TOTAL_RIGHT, TOTAL)
+            show_blinks(org_frame,TOTAL)
 
             if eye_delay > 0:
                 eye_delay -= 1
@@ -215,7 +208,7 @@ def start_dlib(filename=None):
                 fps = counter / (time.time() - start_time)
                 counter = 0
                 start_time = time.time()
-            show_fps(frame, fps)
+            show_fps(org_frame, fps)
 
             if not is_real_time:
                 open_time = open_frames/video_fps
@@ -227,13 +220,19 @@ def start_dlib(filename=None):
             else:
                 open_avg = 0
 
-            show_open_times(frame, open_time, open_avg)
+            show_open_times(org_frame, open_time, open_avg)
 
+            frame = hconcat(org_frame, frame)
             cv2.imshow("Faces found", frame)
 
-        k = 0xFF & cv2.waitKey(1)
+        while frame_number == 1:
+            k = 0xFF & cv2.waitKey(1)
+            if k == 32:
+                break
 
+        k = 0xFF & cv2.waitKey(1)
         if k == ord('q') or k == 27:
             break
+
 
     cv2.destroyAllWindows()
