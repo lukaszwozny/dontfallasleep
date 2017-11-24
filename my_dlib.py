@@ -102,12 +102,12 @@ def start_dlib(filename=None):
     predictor = dlib.shape_predictor(PREDICTOR_PATH)
     while True:
         # Block fps if file
-        if not is_real_time:
-            if (time.time() - frame_time) < 1 / video_fps:
-                continue
-            else:
-                frame_time = time.time()
-                frame_number += 1
+        # if not is_real_time:
+        #     if (time.time() - frame_time) < 1 / video_fps:
+        #         continue
+        #     else:
+        #         frame_time = time.time()
+        #         frame_number += 1
 
         ret, frame = video_capture.read()
         # Flip vertical

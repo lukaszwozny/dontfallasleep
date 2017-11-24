@@ -94,6 +94,11 @@ def from_video_file(filename):
         cv2.imshow('img', org_det_img)
 
         # Close when ESC pressed
+        while video.get(cv2.CAP_PROP_POS_FRAMES) == 1:
+            k = 0xFF & cv2.waitKey(1)
+            if k == 32:
+                break
+
         k = cv2.waitKey(30) & 0xff
         if k == 27:
             return
@@ -193,10 +198,10 @@ def from_images():
 
 
 if __name__ == '__main__':
-    from_video_file('vids/woman.mp4')
+    # from_video_file('vids/woman.mp4')
     # from_video_file('vids/woman_2.mp4')
     # start_dlib()
-    # start_dlib(filename='vids/woman.mp4')
+    start_dlib(filename='vids/woman.mp4')
     # start_dlib(filename='vids/woman_2.mp4')
     # from_webcam()
     # from_images()
